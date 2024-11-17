@@ -33,6 +33,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
     public void onBindViewHolder(MusicViewHolder holder, int position) {
         Music music = musicList.get(position);
         holder.title.setText(music.getName());
+        holder.tvSinger.setText(music.getSinger());
         holder.itemView.setOnClickListener(v -> listener.onMusicClick(music));
     }
 
@@ -46,11 +47,12 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
     }
 
     class MusicViewHolder extends RecyclerView.ViewHolder {
-        TextView title;
+        TextView title,tvSinger;
 
         MusicViewHolder(View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.tvFileName);
+            tvSinger = itemView.findViewById(R.id.tvSinger);
         }
     }
 }

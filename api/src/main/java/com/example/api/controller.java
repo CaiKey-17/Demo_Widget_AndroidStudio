@@ -42,7 +42,7 @@ public class controller {
     }
 
     @PostMapping("/add")
-    public String addMusic(@RequestParam("name") String name, @RequestParam("file") MultipartFile file, @RequestParam("singer") String singer) {
+    public String addMusic(@RequestParam("name") String name, @RequestParam("singer") String singer, @RequestParam("file") MultipartFile file) {
         // Define the upload directory
         String uploadDir = "src/main/resources/static/images/";
 

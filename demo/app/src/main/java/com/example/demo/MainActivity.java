@@ -83,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // Populate RecyclerView with music items
     private void populateListView(List<Music> musics) {
         MusicAdapter adapter = new MusicAdapter(MainActivity.this, musics, this::playMusic);
         recyclerView.setAdapter(adapter);
@@ -101,7 +100,6 @@ public class MainActivity extends AppCompatActivity {
 
             // Use the IP address of your machine instead of "localhost"
             String musicUrl = "http://192.168.70.170:8080/"+music.getFileMp3();  // Example: "http://192.168.1.100:8080/images/saoem.mp3"
-            Log.d("C",musicUrl);
             mediaPlayer.setDataSource(musicUrl); // Set the server URL
             mediaPlayer.prepareAsync();  // Prepare asynchronously
             mediaPlayer.setOnPreparedListener(mp -> {
