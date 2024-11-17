@@ -1,0 +1,77 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			  android:layout_width="match_parent"
+			  android:layout_height="wrap_content"
+			  android:orientation="vertical"
+			  android:background="@drawable/background"
+			  android:scaleType="centerCrop"
+			  android:gravity="center">
+	<TextView
+			android:layout_margin="10dp"
+
+			android:textStyle="bold"
+
+			android:gravity="center"
+			android:id="@+id/widget_text_title"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="Tên bài hát"
+			android:ellipsize="marquee"
+			android:marqueeRepeatLimit="marquee_forever"
+			android:singleLine="true"
+			android:textColor="#FFF"
+			android:textSize="20dp"/>
+	<LinearLayout
+			android:gravity="center" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+
+	<!-- Nút Play -->
+
+
+	<!-- Nút Tua Lùi -->
+	<ImageButton
+			android:layout_margin="10dp"
+			android:id="@+id/widget_btn_seek_backward"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:contentDescription="Tua Lùi"
+			android:src="@android:drawable/ic_media_rew"
+			android:background="@null"/>
+
+		
+	<!-- Tên bài hát -->
+
+		<ImageButton
+				android:layout_margin="10dp"
+
+				android:id="@+id/widget_btn_play"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:contentDescription="Chơi"
+				android:src="@android:drawable/ic_media_play"
+				android:background="@null"/>
+
+		<!-- Nút Pause -->
+		<ImageButton
+				android:layout_margin="10dp"
+
+				android:id="@+id/widget_btn_pause"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:contentDescription="Dừng"
+				android:src="@android:drawable/ic_media_pause"
+				android:background="@null"
+				android:visibility="gone"/>
+	<!-- Nút Tua Nhanh -->
+	<ImageButton
+			android:layout_margin="10dp"
+
+			android:id="@+id/widget_btn_seek_forward"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:contentDescription="Tua Nhanh"
+			android:src="@android:drawable/ic_media_ff"
+			android:background="@null"/>
+
+	</LinearLayout>
+
+
+</LinearLayout>
