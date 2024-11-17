@@ -36,7 +36,7 @@
 			android:src="@android:drawable/ic_media_rew"
 			android:background="@null"/>
 
-		
+
 	<!-- Tên bài hát -->
 
 		<ImageButton
