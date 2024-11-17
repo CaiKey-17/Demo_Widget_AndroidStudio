@@ -27,7 +27,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private static MediaPlayer mediaPlayer; // Static MediaPlayer for playing audio
+    private static MediaPlayer mediaPlayer;
     private static final int PERMISSION_REQUEST_CODE = 100;
 
     @Override
@@ -38,16 +38,14 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Check for permission to read external storage
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
         } else {
-            loadListMenu(); // Load music data from the API
+            loadListMenu();
         }
     }
 
-    // Handle permission result
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -60,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Load music list from API
     private void loadListMenu() {
         RetrofitService retrofitService = new RetrofitService();
         APIUser api = retrofitService.getApiService();
@@ -89,23 +86,21 @@ public class MainActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
-    // Play the selected music file
     private void playMusic(Music music) {
         if (mediaPlayer != null) {
-            mediaPlayer.release(); // Release any previous instance
+            mediaPlayer.release();
         }
 
         try {
             mediaPlayer = new MediaPlayer();
 
-            // Use the IP address of your machine instead of "localhost"
-            String musicUrl = "http://192.168.70.170:8080/"+music.getFileMp3();  // Example: "http://192.168.1.100:8080/images/saoem.mp3"
-            mediaPlayer.setDataSource(musicUrl); // Set the server URL
-            mediaPlayer.prepareAsync();  // Prepare asynchronously
+            String musicUrl = "http://192.168.70.170:8080/"+music.getFileMp3();
+            mediaPlayer.setDataSource(musicUrl);
+            mediaPlayer.prepareAsync();
             mediaPlayer.setOnPreparedListener(mp -> {
-                mediaPlayer.start();  // Start playback when media is prepared
-                Toast.makeText(MainActivity.this, "Playing: " + music.getName(), Toast.LENGTH_SHORT).show();
-                updateWidget(music.getName());  // Update widget with music title
+                mediaPlayer.start();
+                Toast.makeText(MainActivity.this, "Đang phát: " + music.getName(), Toast.LENGTH_SHORT).show();
+                updateWidget(music.getName());
             });
 
             mediaPlayer.setOnCompletionListener(mp -> {
@@ -115,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer.setOnErrorListener((mp, what, extra) -> {
                 Log.e("MediaPlayer", "Error occurred while playing the music.");
                 Toast.makeText(MainActivity.this, "Error playing music", Toast.LENGTH_SHORT).show();
-                return true;  // Return true if the error was handled
+                return true;
             });
 
         } catch (IOException e) {
@@ -124,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Update widget with current music info
     private void updateWidget(String musicTitle) {
         Intent intent = new Intent(this, MusicAppWidget.class);
         intent.setAction(MusicAppWidget.ACTION_UPDATE_WIDGET);
@@ -135,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Release MediaPlayer on destroy to prevent memory leaks
         if (mediaPlayer != null) {
             mediaPlayer.release();
             mediaPlayer = null;

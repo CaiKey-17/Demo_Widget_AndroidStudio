@@ -15,6 +15,15 @@ public class Music {
     private String name;
     private String fileMp3;
     private String singer;
+    private String image;
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
 
     public Music() {
     }
