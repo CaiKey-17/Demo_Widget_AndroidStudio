@@ -1,34 +1,60 @@
 package com.example.demo;
 
+import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.Manifest;
 
 import com.example.demo.Model.Music;
 import com.example.demo.Retrofit.APIUser;
 import com.example.demo.Retrofit.RetrofitService;
 
+import java.io.IOException;
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import java.io.IOException;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private static MediaPlayer mediaPlayer;
     private static final int PERMISSION_REQUEST_CODE = 100;
+    private List<Music> musicList;
+    private int currentPosition = -1;
+
+    public static final String ACTION_PLAY_NEXT = "com.example.demo.ACTION_PLAY_NEXT";
+    public static final String ACTION_PLAY_PREVIOUS = "com.example.demo.ACTION_PLAY_PREVIOUS";
+    private final BroadcastReceiver musicControlReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction() != null) {
+                switch (intent.getAction()) {
+                    case ACTION_PLAY_NEXT:
+                        playNextSong();
+                        break;
+
+                    case ACTION_PLAY_PREVIOUS:
+                        playPreviousSong();
+                        break;
+                }
+            }
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +64,41 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
+        checkPermissionsAndLoadMusic();
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_PLAY_NEXT);
+        filter.addAction(ACTION_PLAY_PREVIOUS);
+        registerReceiver(musicControlReceiver, filter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(musicControlReceiver);
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+    }
+
+    private void checkPermissionsAndLoadMusic() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_MEDIA_AUDIO}, PERMISSION_REQUEST_CODE);
+            } else {
+                loadListMenu();
+            }
         } else {
-            loadListMenu();
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
+            } else {
+                loadListMenu();
+            }
         }
     }
 
@@ -51,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                loadListMenu(); // Load music data if permission is granted
+                loadListMenu();
             } else {
                 Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
             }
@@ -66,8 +122,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Music>> call, Response<List<Music>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<Music> musics = response.body();
-                    populateListView(musics); // Populate RecyclerView with music data
+                    musicList = response.body();
+                    populateListView(musicList);
                 } else {
                     Log.e("API Error", "Response was unsuccessful or body is null.");
                 }
@@ -81,9 +137,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void populateListView(List<Music> musics) {
-        MusicAdapter adapter = new MusicAdapter(MainActivity.this, musics, this::playMusic);
+        MusicAdapter adapter = new MusicAdapter(this, musics, this::onMusicSelected);
         recyclerView.setAdapter(adapter);
         adapter.notifyDataSetChanged();
+    }
+
+    private void onMusicSelected(Music music) {
+        currentPosition = musicList.indexOf(music);
+        playMusic(music);
     }
 
     private void playMusic(Music music) {
@@ -93,59 +154,66 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             mediaPlayer = new MediaPlayer();
-
-            String musicUrl = "http://192.168.70.170:8080/"+music.getFileMp3();
+            String musicUrl = "http://192.168.70.170:8080/" + music.getFileMp3();
             mediaPlayer.setDataSource(musicUrl);
             mediaPlayer.prepareAsync();
             mediaPlayer.setOnPreparedListener(mp -> {
                 mediaPlayer.start();
-                Toast.makeText(MainActivity.this, "Đang phát: " + music.getName(), Toast.LENGTH_SHORT).show();
-                updateWidget(music.getName());
+                Toast.makeText(this, "Đang phát: " + music.getName(), Toast.LENGTH_SHORT).show();
+                updateWidget(music.getName(), music.getSinger(), "http://192.168.70.170:8080/" + music.getImage());
             });
 
-            mediaPlayer.setOnCompletionListener(mp -> {
-                Toast.makeText(MainActivity.this, "Finished: " + music.getName(), Toast.LENGTH_SHORT).show();
-            });
+            mediaPlayer.setOnCompletionListener(mp -> playNextSong());
 
             mediaPlayer.setOnErrorListener((mp, what, extra) -> {
                 Log.e("MediaPlayer", "Error occurred while playing the music.");
-                Toast.makeText(MainActivity.this, "Error playing music", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Error playing music", Toast.LENGTH_SHORT).show();
                 return true;
             });
 
         } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(MainActivity.this, "Error playing music", Toast.LENGTH_SHORT).show();
+            Log.e("MediaPlayer", "Error setting data source", e);
         }
     }
 
-    private void updateWidget(String musicTitle) {
+    private void updateWidget(String musicTitle, String singer, String image) {
         Intent intent = new Intent(this, MusicAppWidget.class);
         intent.setAction(MusicAppWidget.ACTION_UPDATE_WIDGET);
         intent.putExtra("MUSIC_TITLE", musicTitle);
+        intent.putExtra("SINGER", singer);
+        intent.putExtra("MUSIC_IMAGE", image);
         sendBroadcast(intent);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
+    private void playNextSong() {
+        if (musicList != null && currentPosition < musicList.size() - 1) {
+            currentPosition++;
+            playMusic(musicList.get(currentPosition));
+        } else {
+            Toast.makeText(this, "Đây là bài cuối cùng!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void playPreviousSong() {
+        if (musicList != null && currentPosition > 0) {
+            currentPosition--;
+            playMusic(musicList.get(currentPosition));
+        } else {
+            Toast.makeText(this, "Đây là bài đầu tiên!", Toast.LENGTH_SHORT).show();
         }
     }
 
     public static void continuePlaying(Context context) {
         if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
             mediaPlayer.start();
-            Toast.makeText(context, "Music Resumed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Tiếp tục phát", Toast.LENGTH_SHORT).show();
         }
     }
 
     public static void pauseMusic(Context context) {
         if (mediaPlayer != null && mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
-            Toast.makeText(context, "Music Paused", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Tạm dừng", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -153,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
         if (mediaPlayer != null) {
             int newPosition = mediaPlayer.getCurrentPosition() + milliseconds;
             mediaPlayer.seekTo(newPosition);
-            Toast.makeText(context, "Seeked Forward", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Tua nhanh 5s", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -161,7 +229,8 @@ public class MainActivity extends AppCompatActivity {
         if (mediaPlayer != null) {
             int newPosition = mediaPlayer.getCurrentPosition() - milliseconds;
             mediaPlayer.seekTo(newPosition);
-            Toast.makeText(context, "Seeked Backward", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Tua lùi 5s", Toast.LENGTH_SHORT).show();
         }
     }
+    
 }

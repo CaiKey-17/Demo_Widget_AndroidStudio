@@ -43,27 +43,22 @@ public class controller {
 
     @PostMapping("/add")
     public String addMusic(@RequestParam("name") String name, @RequestParam("singer") String singer, @RequestParam("file") MultipartFile file) {
-        // Define the upload directory
         String uploadDir = "src/main/resources/static/images/";
 
-        // Create the directory if it doesn't exist
         File dir = new File(uploadDir);
         if (!dir.exists()) {
-            dir.mkdirs();  // Ensure the directory exists before saving the file
+            dir.mkdirs();
         }
 
-        // Save the MP3 file on the server
-        String filePath = uploadDir + file.getOriginalFilename();  // Full path with filename
+        String filePath = uploadDir + file.getOriginalFilename();
         try {
-            file.transferTo(Paths.get(filePath));  // Transfer the file to the desired path
+            file.transferTo(Paths.get(filePath));
 
-            // Create a new Music object with the file path
             Music music = new Music();
             music.setName(name);
             music.setSinger(singer);
-            music.setFileMp3(filePath);  // Save the file path in the Music object
+            music.setFileMp3(filePath);
 
-            // Save the music object to the database
             service.addMusic(music);
 
             return "Music added successfully!";

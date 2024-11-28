@@ -1,6 +1,8 @@
 package com.example.demo.Model;
 
-public class Music {
+import java.io.Serializable;
+
+public class Music implements Serializable {
     private int id;
     private String name;
     private String fileMp3;

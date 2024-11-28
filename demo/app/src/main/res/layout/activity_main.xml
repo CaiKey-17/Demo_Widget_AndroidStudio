@@ -11,6 +11,8 @@
     <TextView
             android:text="Danh sách các bài hát"
             android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="25dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" android:id="@+id/textView"/>
     <androidx.recyclerview.widget.RecyclerView

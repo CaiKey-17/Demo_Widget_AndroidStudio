@@ -14,12 +14,12 @@ public class RetrofitService {
     }
 
 
-    private static final String BASE_URL = "http://192.168.70.170:8080"; // Thay đổi URL của bạn
+    private static final String BASE_URL = "http://192.168.70.170:8080";
     private static Retrofit retrofit = null;
 
     public RetrofitService() {
         Gson gson = new GsonBuilder()
-                .setLenient() // Cho phép phân tích cú pháp JSON không chính xác
+                .setLenient()
                 .create();
 
         retrofit = new Retrofit.Builder()
